@@ -6,7 +6,8 @@
 #include<sys/socket.h>
 
 #define BUFLEN 512  //Max length of buffer
-#define PORT 8888   //The port on which to listen for incoming data
+#define PORT 8777   //The port on which to listen for incoming data
+#define ADDRESS "127.10.13.13"
 
 double Oblicz(char *wsk);
 void changeSpaceTo0x00(char *wsk);
@@ -14,8 +15,9 @@ char* returnNextArgumentAsString(char *wsk);
 
 void die(char *s)
 {
-    perror(s);
-    exit(1);
+    //       perror - print a system error message
+	puts(s);
+    exit(-1);
 }
 
 int dodawanie(int a, int b){
@@ -27,15 +29,16 @@ int main(void)
 {
     struct sockaddr_in si_me, si_other;
     double wynik;
-
-    int s, i, slen = sizeof(si_other) , recv_len;
+    socklen_t addr_size;
+    int serwerSocket  , recv_len;
     char buf[BUFLEN];
     char buffor_nadawzy[BUFLEN];
 
+    addr_size = sizeof(si_other);
     //create a UDP socket
-    if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    if ((serwerSocket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
-        die("socket");
+        die("Error: socket\n");
     }
 
     // zero out the structure
@@ -43,39 +46,34 @@ int main(void)
 
     si_me.sin_family = AF_INET;
     si_me.sin_port = htons(PORT);
-    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+    si_me.sin_addr.s_addr = inet_addr(ADDRESS);
 
     //bind socket to port
-    if( bind(s , (struct sockaddr*)&si_me, sizeof(si_me) ) == -1)
+    if( bind(serwerSocket , (struct sockaddr*)&si_me, sizeof(si_me) ) == -1)
     {
-        die("bind");
+        die("Error: bind\n");
     }
     while(1)
     {
-        printf("Waiting for data...");
+        printf("Waiting for data...\n");
         fflush(stdout);
 
         //try to receive some data, this is a blocking call
-        if ((recv_len = recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &slen)) == -1)
+        if ((recv_len = recvfrom(serwerSocket, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &addr_size)) == -1)
         {
-            die("recvfrom()");
+            die("Error: recvfrom()\n");
         }
 
-        //print details of the client/peer and the data received
-        printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-        printf("Data: %s\n" , buf);
+        printf("Odebrane Dane %serwerSocked \n", inet_ntoa(si_other.sin_addr));
+        printf("Dane: %serwerSocked\n" , buf);
         wynik=Oblicz(buf);
         sprintf(buffor_nadawzy,"wynik %f",wynik);
 
-        if (sendto(s, buffor_nadawzy, recv_len, 0, (struct sockaddr*) &si_other, slen) == -1)
+        if (sendto(serwerSocket, buffor_nadawzy, recv_len, 0, (struct sockaddr*) &si_other, addr_size) == -1)
         {
-            die("sendto()");
+            die("Error: sendto()\n");
         }
-        exit(0);
-
     }
-
-    close(s);
     return 0;
 }
 double Oblicz(char *wsk){
@@ -90,21 +88,20 @@ double Oblicz(char *wsk){
 	wsk=returnNextArgumentAsString(wsk);
 	b=atoi(wsk);
 
-	printf("sprawdzenie arumentor: %s ,%d ,%d \n",operacja,a,b);
+	printf("sprawdzenie argumentow: %s, %d, %d. \n",operacja,a,b);
 
 	if (!strcmp(operacja, "dodawanie")) {
-
-		wynik=dodawanie(a,b);
 		printf("operacja dodania po stronie serwera zakonczona sukcesem\n");
+		wynik=dodawanie(a,b);
 
 	} else if (!strcmp(operacja, "odejmowanie")) {
 		printf("operacja odejmowania po stronie serwera zakonczona sukcesem\n");
 	} else if (!strcmp(operacja, "mnozenie")) {
-		printf("operacja mnozenia po stronie serwera zakonczona sukcesem\n");
+		printf("operacja mnozenia po stronie srewera zakonczona sukcesem\n");
 	} else if (!strcmp(operacja, "dzielenie")) {
 		printf("operacja dzielenia po stronie serwera zakonczona sukcesem\n");
 	} else {
-			printf("błedna operacja");
+			printf("błedna operacja\n");
 	}
 	return wynik;
 
@@ -113,7 +110,7 @@ void changeSpaceTo0x00(char *wsk){
 	while(*wsk){
 		if(*wsk==' '){
 			*wsk=0x00;
-			printf("dokonany konwesji z Space To 0x00 adres %x\n",wsk);
+		//	printf("dokonany konwesji z Space To 0x00 adres %x\n",wsk);
 		}
 		wsk++;
 	}
