@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 
 	addr_size = sizeof serverAddr;
 
-	nBytes=sprintf(buffer,"%d %d %s", userArgs.a,userArgs.b, userArgs.operacja);
+	nBytes=sprintf(buffer,"%s %d %d",  userArgs.operacja, userArgs.a,userArgs.b);
 	nBytes++;
 
 	/*Send message to server*/
