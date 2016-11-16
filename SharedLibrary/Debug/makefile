@@ -8,7 +8,6 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include src/subdir.mk
 -include subdir.mk
 -include objects.mk
 
@@ -23,19 +22,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: Serwer
+all: libSharedLibrary.so
 
 # Tool invocations
-Serwer: $(OBJS) $(USER_OBJS)
+libSharedLibrary.so: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	@echo 'Invoking: GCC C Linker'
-	gcc -L"/home/kamil/Documents/workspace/SharedLibrary/Debug" -o "Serwer" $(OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Invoking: Cross GCC Linker'
+	gcc -shared -o "libSharedLibrary.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Serwer
+	-$(RM) $(LIBRARIES)$(OBJS)$(C_DEPS) libSharedLibrary.so
 	-@echo ' '
 
 .PHONY: all clean dependents

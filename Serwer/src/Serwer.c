@@ -4,6 +4,7 @@
 #include<stdlib.h> //exit(0);
 #include<arpa/inet.h>
 #include<sys/socket.h>
+#include <biblioteka.h>
 
 #define BUFLEN 512  //Max length of buffer
 #define PORT 8777   //The port on which to listen for incoming data
@@ -16,14 +17,10 @@ char* returnNextArgumentAsString(char *wsk);
 void die(char *s)
 {
     //       perror - print a system error message
-	puts(s);
+	perror(s);
     exit(-1);
 }
 
-int dodawanie(int a, int b){
-
-	return a+b;
-}
 
 int main(void)
 {
@@ -64,10 +61,12 @@ int main(void)
             die("Error: recvfrom()\n");
         }
 
-        printf("Odebrane Dane %serwerSocked \n", inet_ntoa(si_other.sin_addr));
-        printf("Dane: %serwerSocked\n" , buf);
+
+        printf("Odebrane Dane %s \n", inet_ntoa(si_other.sin_addr));
+        printf("Dane: %s\n" , buf);
         wynik=Oblicz(buf);
         sprintf(buffor_nadawzy,"wynik %f",wynik);
+        printf("wynik %f\n",wynik);
 
         if (sendto(serwerSocket, buffor_nadawzy, recv_len, 0, (struct sockaddr*) &si_other, addr_size) == -1)
         {
@@ -76,17 +75,19 @@ int main(void)
     }
     return 0;
 }
+
 double Oblicz(char *wsk){
 	char* operacja;
 	int a;
 	int b;
-	double wynik = 15;
+	double wynik = 0;
 	changeSpaceTo0x00(wsk);
 	operacja=wsk;
 	wsk=returnNextArgumentAsString(wsk);
 	a=atoi(wsk);
 	wsk=returnNextArgumentAsString(wsk);
 	b=atoi(wsk);
+
 
 	printf("sprawdzenie argumentow: %s, %d, %d. \n",operacja,a,b);
 
@@ -96,10 +97,16 @@ double Oblicz(char *wsk){
 
 	} else if (!strcmp(operacja, "odejmowanie")) {
 		printf("operacja odejmowania po stronie serwera zakonczona sukcesem\n");
+		wynik=odejmowanie(a,b);
+
 	} else if (!strcmp(operacja, "mnozenie")) {
+
 		printf("operacja mnozenia po stronie srewera zakonczona sukcesem\n");
+		wynik=mnozenie(a,b);
 	} else if (!strcmp(operacja, "dzielenie")) {
+
 		printf("operacja dzielenia po stronie serwera zakonczona sukcesem\n");
+		wynik=dzielenie(a,b);
 	} else {
 			printf("błedna operacja\n");
 	}
@@ -114,7 +121,9 @@ void changeSpaceTo0x00(char *wsk){
 		}
 		wsk++;
 	}
+
 }
+
 char* returnNextArgumentAsString(char *wsk){
 	while(*wsk!=0x00){
 		wsk++;
