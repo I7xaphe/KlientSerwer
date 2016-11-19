@@ -4,113 +4,106 @@
 #include<stdlib.h> //exit(0);
 #include<arpa/inet.h>
 #include<sys/socket.h>
-#include <biblioteka.h>
+#include<biblioteka.h>
 
 #define BUFLEN 512  //Max length of buffer
-#define PORT 8777   //The port on which to listen for incoming data
+#define PORT 7777   //The port on which to listen for incoming data
 #define ADDRESS "127.10.13.13"
 
 double Oblicz(char *wsk);
 void changeSpaceTo0x00(char *wsk);
 char* returnNextArgumentAsString(char *wsk);
-
-void die(char *s)
-{
-    //       perror - print a system error message
-	perror(s);
-    exit(-1);
-}
+void mExit(char *s);
 
 
 int main(void)
 {
-    struct sockaddr_in si_me, si_other;
+
+    struct sockaddr_in si_serwer, si_klient;
     double wynik;
     socklen_t addr_size;
     int serwerSocket  , recv_len;
     char buf[BUFLEN];
     char buffor_nadawzy[BUFLEN];
 
-    addr_size = sizeof(si_other);
+    addr_size = sizeof(si_klient);
     //create a UDP socket
     if ((serwerSocket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
-        die("Error: socket\n");
+        mExit("Error: socket\n");
     }
 
     // zero out the structure
-    memset((char *) &si_me, 0, sizeof(si_me));
+    memset((char *) &si_serwer, 0, sizeof(si_serwer));
 
-    si_me.sin_family = AF_INET;
-    si_me.sin_port = htons(PORT);
-    si_me.sin_addr.s_addr = inet_addr(ADDRESS);
+    si_serwer.sin_family = AF_INET;
+    si_serwer.sin_port = htons(PORT);
+    si_serwer.sin_addr.s_addr = inet_addr(ADDRESS);
 
     //bind socket to port
-    if( bind(serwerSocket , (struct sockaddr*)&si_me, sizeof(si_me) ) == -1)
+    if(bind(serwerSocket , (struct sockaddr*)&si_serwer, sizeof(si_serwer) ) == -1)
     {
-        die("Error: bind\n");
+        mExit("Error: bind\n");
     }
     while(1)
     {
         printf("Waiting for data...\n");
         fflush(stdout);
 
-        //try to receive some data, this is a blocking call
-        if ((recv_len = recvfrom(serwerSocket, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &addr_size)) == -1)
+        //funkcja blokacja
+        if ((recv_len = recvfrom(serwerSocket, buf, BUFLEN, 0, (struct sockaddr *) &si_klient, &addr_size)) == -1)
         {
-            die("Error: recvfrom()\n");
+            mExit("Error: recvfrom()\n");
         }
 
 
-        printf("Odebrane Dane %s \n", inet_ntoa(si_other.sin_addr));
+        printf("Nadawca %s \n", inet_ntoa(si_klient.sin_addr));
         printf("Dane: %s\n" , buf);
         wynik=Oblicz(buf);
-        sprintf(buffor_nadawzy,"wynik %f",wynik);
+        recv_len=sprintf(buffor_nadawzy,"wynik %.3f",wynik);
+        recv_len++;
         printf("wynik %f\n",wynik);
 
-        if (sendto(serwerSocket, buffor_nadawzy, recv_len, 0, (struct sockaddr*) &si_other, addr_size) == -1)
+        if (sendto(serwerSocket, buffor_nadawzy, recv_len, 0, (struct sockaddr*) &si_klient, addr_size) == -1)
         {
-            die("Error: sendto()\n");
+            mExit("Error: sendto()\n");
         }
     }
     return 0;
 }
 
 double Oblicz(char *wsk){
+	double (*funkcja)(struct argumenty* arg);
 	char* operacja;
-	int a;
-	int b;
-	double wynik = 0;
+	struct argumenty argx;
+
 	changeSpaceTo0x00(wsk);
 	operacja=wsk;
 	wsk=returnNextArgumentAsString(wsk);
-	a=atoi(wsk);
+	argx.a=atof(wsk);
 	wsk=returnNextArgumentAsString(wsk);
-	b=atoi(wsk);
+	argx.b=atof(wsk);
 
 
-	printf("sprawdzenie argumentow: %s, %d, %d. \n",operacja,a,b);
+	printf("sprawdzenie argumentow: %s, %.3f, %.3f. \n",operacja,argx.a,argx.b);
 
 	if (!strcmp(operacja, "dodawanie")) {
-		printf("operacja dodania po stronie serwera zakonczona sukcesem\n");
-		wynik=dodawanie(a,b);
+		funkcja=dodawanie;
 
 	} else if (!strcmp(operacja, "odejmowanie")) {
-		printf("operacja odejmowania po stronie serwera zakonczona sukcesem\n");
-		wynik=odejmowanie(a,b);
+		funkcja=odejmowanie;
 
 	} else if (!strcmp(operacja, "mnozenie")) {
 
-		printf("operacja mnozenia po stronie srewera zakonczona sukcesem\n");
-		wynik=mnozenie(a,b);
+		funkcja=mnozenie;
 	} else if (!strcmp(operacja, "dzielenie")) {
 
-		printf("operacja dzielenia po stronie serwera zakonczona sukcesem\n");
-		wynik=dzielenie(a,b);
+		funkcja=dzielenie;
 	} else {
-			printf("błedna operacja\n");
+		printf("błedna operacja\n");
 	}
-	return wynik;
+
+	return funkcja(&argx);
 
 }
 void changeSpaceTo0x00(char *wsk){
@@ -130,4 +123,9 @@ char* returnNextArgumentAsString(char *wsk){
 	}
 	wsk++;
 	return wsk;
+}
+void mExit(char *s)
+{
+	perror(s);
+    exit(-1);
 }

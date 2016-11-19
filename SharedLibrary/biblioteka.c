@@ -1,18 +1,17 @@
 #include "biblioteka.h"
 
-int dodawanie(int a, int b) {
-	return a + b;
+double dodawanie( argumenty* arg) {
+	return arg->a+ arg->b;
 }
 
-int odejmowanie(int a, int b) {
-	return a - b;
+double odejmowanie( argumenty* arg) {
+	return arg->a - arg->b;
 }
 
-int mnozenie(int a, int b) {
-	return a * b;
-
+double mnozenie( argumenty* arg) {
+	return arg->a * arg->b;
 }
-double dzielenie(double a, double b) {
-	return a / b;
+double dzielenie( argumenty* arg) {
+	return arg->a / arg->b;;
 
 }

@@ -15,16 +15,16 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 
-#define PORT 8777
+#define PORT 7777
 #define BUFLEN 512
 
 struct argumenty {
 	char* operacja;
-	int a;
-	int b;
+	double a;
+	double b;
 	char* adres;
 };
-void die(char *s)
+void mExit(char *s)
 {   //       perror - print a system error message
 	puts(s);
     exit(-1);
@@ -32,31 +32,31 @@ void die(char *s)
 
 int main(int argc, char* argv[]) {
 	if (argc != 5) {
-		die("podano błedna liczbe argumentów\n");
+		mExit("podano błedna liczbe argumentów\n");
 	}
 
 	printf("argumenty :%s, %s, %s, %s \n", argv[1],argv[2],argv[3],argv[4]);
 	if (atoi(argv[2]) == 0) {
 		if (*argv[2] != 48) {
-			die("błedny 2 argument\n");
+			mExit("błedny 2 argument\n");
 		}
 	}
-
+//
 	if (atoi(argv[3]) == 0) {
 		if (*argv[3] != 48) {
-			die("błedny 3 argument\n");
+			mExit("błedny 3 argument\n");
 		}
 	}
 	struct argumenty userArgs;
 	userArgs.operacja = argv[1];
-	userArgs.a = atoi(argv[2]);
-	userArgs.b = atoi(argv[3]);
+	userArgs.a = atof(argv[2]);
+	userArgs.b = atof(argv[3]);
 	userArgs.adres = argv[4];
 
 	if (!(strcmp(userArgs.operacja, "dodawanie")||strcmp(userArgs.operacja, "odejmowanie")
 			||strcmp(userArgs.operacja, "mnozenie")||strcmp(userArgs.operacja, "dzielenie"))) {
 
-		die("błedna operacja \n");
+		mExit("błedna operacja \n");
 	}
 
 	int clientSocket, nBytes;
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 
 	addr_size = sizeof serverAddr;
 
-	nBytes=sprintf(buffer,"%s %d %d",userArgs.operacja,userArgs.a,userArgs.b);
+	nBytes=sprintf(buffer,"%s %.3f %.3f",userArgs.operacja,userArgs.a,userArgs.b);
 	nBytes++;
 
 	/*Send message to server*/
@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 	//ostanie 2 argumenty moga byc null
 	nBytes = recvfrom(clientSocket, buffer, BUFLEN, 0,(struct sockaddr *) &serverAddr, &addr_size);
 
-	printf("Zwrocony wynik operacji %s liczb %d i %d wynosi %s\n",userArgs.operacja,userArgs.a,userArgs.b, buffer);
+	printf("Zwrocony wynik operacji %s liczb %.3f i %.3f wynosi %s\n",userArgs.operacja,userArgs.a,userArgs.b, buffer);
 
 	return 0;
 }
